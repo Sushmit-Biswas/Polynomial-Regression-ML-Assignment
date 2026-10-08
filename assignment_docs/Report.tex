@@ -1,0 +1,167 @@
+\documentclass[11pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+\usepackage{hyperref}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{float}
+\usepackage{tikz}
+\usepackage{eso-pic}
+\usepackage{setspace} % Added for line spacing
+\usepackage{parskip}  % Added for better paragraph spacing
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage[hyphens]{url}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{titlesec}
+\usepackage{sectsty}
+\usepackage{fancyhdr}
+\usepackage{enumitem}
+
+% Allow more flexibility in line breaks to prevent border crossing
+\emergencystretch 3em
+\sloppy
+
+% --- Nice Border for All Pages ---
+\AddToShipoutPictureBG{%
+    \begin{tikzpicture}[remember picture,overlay]
+        % Outer thick border
+        \draw[line width=1.5pt, rounded corners=10pt]
+            ([shift={(1.2cm,-1.2cm)}]current page.north west)
+            rectangle
+            ([shift={(-1.2cm,1.2cm)}]current page.south east);
+        % Inner thin border
+        \draw[line width=0.5pt, rounded corners=8pt]
+            ([shift={(1.35cm,-1.35cm)}]current page.north west)
+            rectangle
+            ([shift={(-1.35cm,1.35cm)}]current page.south east);
+    \end{tikzpicture}%
+}
+
+% ------------------------- Colors & Formatting ------------------------- %
+\definecolor{primary}{HTML}{1F3A60}
+\definecolor{secondary}{HTML}{4B6A9B}
+\definecolor{accent}{HTML}{E74C3C}
+\definecolor{lightgray}{HTML}{F7F9FA}
+\definecolor{border}{HTML}{D1D9E0}
+
+\sectionfont{\color{primary}\Large\bfseries}
+\subsectionfont{\color{secondary}\large\bfseries}
+
+% Remove header/footer globally
+\pagestyle{empty}
+\renewcommand{\headrulewidth}{0pt}
+
+\begin{document}
+
+\begin{center}
+    {\Huge \textbf{Machine Learning Assignment 1}} \\[0.5cm]
+    {\LARGE \textbf{Polynomial Regression Report}} \\[0.5cm]
+    {\Large \textbf{Rigorous Data-Driven Analysis of Phase I \& II}} \\[0.5cm]
+    \textbf{Name: Sushmit Biswas \quad | \quad Roll Number: BT2024038}
+\end{center}
+\vspace{0.5cm}
+\hrule height 1pt
+\vspace{0.8cm}
+
+\textbf{Abstract:} This report documents a data-driven approach to establishing optimized Polynomial Regression models for two personalized datasets. The methodology utilizes exploratory data analysis (EDA) to evaluate variable correlations, followed by 5-Fold Cross Validation to programmatically identify robust polynomial degrees without introducing external regularization. By evaluating Out-of-Fold (OOF) predictions, models achieving out-of-fold $R^2$ estimates above $0.90$ were successfully constructed.
+
+% ------------------------- Introduction ------------------------- %
+\section{Analytical Premise}
+Standard polynomial approximations rely on $w_0 + \sum_{i=1}^{d} w_i \phi_i(\mathbf{x})$. Blindly setting $d$ without structural evaluation exposes the model to severe underfitting or Runge-like oscillation overfitting. To reduce the risk of overfitting, polynomial degrees within this project were selected based strictly on validation-fold mean squared error using 5-Fold Cross Validation (Shuffled, random seed=42). This ensures the reported metrics reflect generalization capabilities rather than overfitting. All available input features were retained, allowing the polynomial expansion to represent nonlinear and interaction effects.
+
+\section{Phase 1: Steam Turbine Optimization (var1)}
+The goal of Phase 1 is estimating the Net Power Score ($y$) based on physical turbine variables.
+
+\subsection{Inclusive Feature Representation}
+We compute an inclusive Pearson Correlation matrix on all given dataset features $\{x_1, \dots, x_6\}$. 
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.65\textwidth]{images/phase1_heatmap.png}
+    \caption{Pearson Correlation Heatmap displaying relational bounds in Phase 1.}
+\end{figure}
+All available features were retained because weak marginal correlation does not rule out nonlinear or interaction effects in a polynomial model.
+
+\subsection{Cross-Validation and Polynomial Sizing}
+Using all six available features, five-fold cross-validation evaluated candidate degrees from 1 through 10.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.8\textwidth]{images/phase1_cv_curve.png}
+    \caption{Five-fold cross-validation MSE across candidate polynomial degrees.}
+\end{figure}
+At \textbf{Degree 3}, the validation error curve reaches an optimal minimum among degrees 1--10 before increasing degree complexity causes overfitting on validation sets. From degree 6 onward, the number of polynomial terms becomes comparable to or larger than the number of observations, causing near-zero training error while validation error remains substantially higher. Therefore, validation MSE rather than training MSE was used for degree selection.
+
+\subsection{Phase 1 Empirical Results}
+\begin{itemize}[noitemsep]
+    \item \textbf{Features Used:} $x_1, x_2, x_3, x_4, x_5, x_6$
+    \item \textbf{Selected Degree:} 3
+    \item \textbf{Training MSE:} $0.7727$, \textbf{Training $R^2$:} $0.9272$
+    \item \textbf{Out-Of-Fold Validation MSE:} $0.9895$
+    \item \textbf{Out-Of-Fold Validation $R^2$:} $0.9067$
+\end{itemize}
+These values indicate that the selected polynomial captures a substantial portion of the observed target variation. Residuals are broadly centered around zero, with some outliers and no dominant visible structure.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.6\textwidth]{images/phase1_residuals.png}
+    \caption{Residual distribution mapping relative predictive error across constraints.}
+\end{figure}
+
+
+% ------------------------- Phase 2 ------------------------- %
+\section{Phase 2: Subterranean Thermal Mapping (var2)}
+
+\subsection{Automated Structural Mapping}
+Spatial relationships inherently harbor latent collinearities. 
+\begin{figure}[htbp]
+    \centering
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/phase2_pairplot.png}
+        \caption{Sensor Pair-Plot Topology.}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}{0.48\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{images/phase2_heatmap.png}
+        \caption{Matrix Variance Correlates.}
+    \end{subfigure}
+    \caption{Feature evaluations confirming mathematical retention bounds.}
+\end{figure}
+Again, all three structural coordinates ($x_1, x_2, x_3$) were retained to preserve the multi-dimensional prediction topology against potential non-linear dependencies.
+
+\subsection{Degree Optimization Boundaries}
+A logarithmic sweep mapping error arrays from degree 1 up to polynomial explosion bounds was evaluated. Validation MSE decreases through degree 8 and then increases sharply, while training MSE continues to decrease. This gap indicates overfitting and numerical instability at higher degrees.
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{images/phase2_cv_curve.png}
+    \caption{Five-fold cross-validation MSE across candidate polynomial degrees.}
+\end{figure}
+The minimal automated Validation MSE confirms an optimal fit at \textbf{Degree 8} among candidate degrees 1--20.
+
+\subsection{Phase 2 Empirical Results}
+\begin{itemize}[noitemsep]
+    \item \textbf{Features Used:} $x_1, x_2, x_3$
+    \item \textbf{Discovered Degree:} 8
+    \item \textbf{Training MSE:} $0.1731$, \textbf{Training $R^2$:} $0.9965$
+    \item \textbf{Out-Of-Fold Validation MSE:} $0.2629$
+    \item \textbf{Out-Of-Fold Validation $R^2$:} $0.9947$
+\end{itemize}
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.55\textwidth]{images/phase2_true_vs_pred.png}
+    \caption{True output mappings accurately predicting geological boundaries.}
+\end{figure}
+
+\section{Computational Complexity \& Overparameterization}
+During the exhaustive degree search, models were evaluated up to the maximum candidate degrees specified for this analysis (Degree 10 for Phase 1 and Degree 20 for Phase 2). It is mathematically critical to note that high-degree polynomial expansions trigger severe overparameterization. For instance, evaluating Phase 1 at Degree 10 across 6 features generates over 8,000 distinct polynomial interaction parameters. When fitted against approximately 1,000 training observations, the design matrix becomes pathologically rank-deficient (where $P > N$).
+
+This disparity causes the standard Ordinary Least Squares (OLS) estimator to produce nearly zero training error. However, this high-dimensional polynomial surface exhibits wild mathematical oscillations between known data points. When exposed to new unseen Validation folds, this creates large extrapolation and numerical-instability errors on held-out folds, explaining the massive spikes observed in the right-tails of the CV curves. By strictly trusting the Out-Of-Fold Validation MSE to natively cap the models at Degree 3 and Degree 8, this methodology successfully avoided these catastrophic numerical illusions without relying on external Ridge or Lasso constraints.
+
+\section{Conclusion}
+The experimental results demonstrate that rigorous cross-validation and inclusive feature retention successfully produce robust unpenalized polynomial models. By focusing on explicit Out-of-Fold variance tracking rather than isolated Training metrics, Phase 1 and Phase 2 achieved out-of-fold $R^2$ estimates of $0.9067$ and $0.9947$ respectively, with the selected degrees determined by the evaluated cross-validation results.
+\end{document}

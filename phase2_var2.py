@@ -11,13 +11,16 @@ from sklearn.preprocessing import PolynomialFeatures
 
 
 ROOT = Path(__file__).resolve().parent
-DATA_DIR = ROOT / "BT2024038"
+RAW_DIR = ROOT / "data" / "raw"
+PRED_DIR = ROOT / "predictions"
+PRED_DIR.mkdir(exist_ok=True)
+RAW_DIR.mkdir(parents=True, exist_ok=True)
 IMAGE_DIR = ROOT / "images"
 IMAGE_DIR.mkdir(exist_ok=True)
 
 def main():
-    train_df = pd.read_csv(DATA_DIR / "BT2024038_train_var2.csv")
-    test_df = pd.read_csv(DATA_DIR / "BT2024038_test_var2.csv")
+    train_df = pd.read_csv(RAW_DIR / "BT2024038_train_var2.csv")
+    test_df = pd.read_csv(RAW_DIR / "BT2024038_test_var2.csv")
     features = [column for column in train_df.columns if column != "y"]
     X = train_df[features].to_numpy()
     y = train_df["y"].to_numpy()
@@ -123,7 +126,7 @@ def main():
 
     test_predictions = model.predict(transformer.transform(test_df[features].to_numpy()))
     pd.DataFrame({"y": test_predictions}).to_csv(
-        DATA_DIR / "BT2024038_pred_var2.csv", index=False
+        PRED_DIR / "BT2024038_pred_var2.csv", index=False
     )
 
 if __name__ == "__main__":
