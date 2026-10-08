@@ -15,7 +15,7 @@ RAW_DIR = ROOT / "data" / "raw"
 PRED_DIR = ROOT / "predictions"
 PRED_DIR.mkdir(exist_ok=True)
 RAW_DIR.mkdir(parents=True, exist_ok=True)
-IMAGE_DIR = ROOT / "images" / "p2"
+IMAGE_DIR = ROOT / "images" / "phase2"
 IMAGE_DIR.mkdir(parents=True, exist_ok=True)
 
 def main():
