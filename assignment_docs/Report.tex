@@ -69,32 +69,32 @@
 \hrule height 1pt
 \vspace{0.8cm}
 
-\textbf{Abstract:} This report documents a data-driven approach to establishing optimized Polynomial Regression models for two personalized datasets. The methodology utilizes exploratory data analysis (EDA) to evaluate variable correlations, followed by 5-Fold Cross Validation to programmatically identify robust polynomial degrees without introducing external regularization. By evaluating Out-of-Fold (OOF) predictions, models achieving out-of-fold $R^2$ estimates above $0.90$ were successfully constructed.
+\textbf{Abstract:} This report documents the process of building Polynomial Regression models for two personalized datasets. The methodology utilizes exploratory data analysis (EDA) to evaluate variable correlations, followed by 5-Fold Cross Validation to find the best polynomial degrees without using regularization. By evaluating Out-of-Fold (OOF) predictions, models achieving out-of-fold $R^2$ estimates above $0.90$ were successfully constructed.
 
 % ------------------------- Introduction ------------------------- %
-\section{Analytical Premise}
-Standard polynomial approximations rely on $w_0 + \sum_{i=1}^{d} w_i \phi_i(\mathbf{x})$. Blindly setting $d$ without structural evaluation exposes the model to severe underfitting or Runge-like oscillation overfitting. To reduce the risk of overfitting, polynomial degrees within this project were selected based strictly on validation-fold mean squared error using 5-Fold Cross Validation (Shuffled, random seed=42). This ensures the reported metrics reflect generalization capabilities rather than overfitting. All available input features were retained, allowing the polynomial expansion to represent nonlinear and interaction effects.
+\section{Introduction}
+Standard polynomial approximations rely on $w_0 + \sum_{i=1}^{d} w_i \phi_i(\mathbf{x})$. Blindly setting $d$ without structural evaluation exposes the model to severe underfitting or Runge-like oscillation overfitting. To prevent this, the polynomial degrees were chosen based on the validation mean squared error using 5-Fold Cross Validation. This ensures the model generalizes well to unseen data. All available input features were used.
 
 \section{Phase 1: Steam Turbine Optimization (var1)}
 The goal of Phase 1 is estimating the Net Power Score ($y$) based on physical turbine variables.
 
-\subsection{Inclusive Feature Representation}
-We compute an inclusive Pearson Correlation matrix on all given dataset features $\{x_1, \dots, x_6\}$. 
+\subsection{Feature Selection}
+We calculate the Pearson Correlation matrix for all features $\{x_1, \dots, x_6\}$. 
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.65\textwidth]{images/phase1_heatmap.png}
     \caption{Pearson Correlation Heatmap displaying relational bounds in Phase 1.}
 \end{figure}
-All available features were retained because weak marginal correlation does not rule out nonlinear or interaction effects in a polynomial model.
+All features were kept because they may still have non-linear or interaction effects, even if their individual correlation is weak.
 
-\subsection{Cross-Validation and Polynomial Sizing}
+\subsection{Cross-Validation}
 Using all six available features, five-fold cross-validation evaluated candidate degrees from 1 through 10.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.8\textwidth]{images/phase1_cv_curve.png}
     \caption{Five-fold cross-validation MSE across candidate polynomial degrees.}
 \end{figure}
-At \textbf{Degree 3}, the validation error curve reaches an optimal minimum among degrees 1--10 before increasing degree complexity causes overfitting on validation sets. From degree 6 onward, the number of polynomial terms becomes comparable to or larger than the number of observations, causing near-zero training error while validation error remains substantially higher. Therefore, validation MSE rather than training MSE was used for degree selection.
+At \textbf{Degree 3}, the validation error is the lowest among degrees 1--10. After this point, higher degrees start to overfit the data. Validation MSE was used instead of training MSE because training error can drop near zero when the model has too many terms.
 
 \subsection{Phase 1 Empirical Results}
 \begin{itemize}[noitemsep]
@@ -104,7 +104,7 @@ At \textbf{Degree 3}, the validation error curve reaches an optimal minimum amon
     \item \textbf{Out-Of-Fold Validation MSE:} $0.9895$
     \item \textbf{Out-Of-Fold Validation $R^2$:} $0.9067$
 \end{itemize}
-These values indicate that the selected polynomial captures a substantial portion of the observed target variation. Residuals are broadly centered around zero, with some outliers and no dominant visible structure.
+These values show that the model fits the data well. The residuals are mostly centered around zero without any obvious patterns.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.6\textwidth]{images/phase1_residuals.png}
@@ -115,8 +115,8 @@ These values indicate that the selected polynomial captures a substantial portio
 % ------------------------- Phase 2 ------------------------- %
 \section{Phase 2: Subterranean Thermal Mapping (var2)}
 
-\subsection{Automated Structural Mapping}
-Spatial relationships inherently harbor latent collinearities. 
+\subsection{Feature Analysis}
+We analyze the correlation between the spatial coordinates. 
 \begin{figure}[htbp]
     \centering
     \begin{subfigure}{0.48\textwidth}
@@ -134,8 +134,8 @@ Spatial relationships inherently harbor latent collinearities.
 \end{figure}
 Again, all three structural coordinates ($x_1, x_2, x_3$) were retained to preserve the multi-dimensional prediction topology against potential non-linear dependencies.
 
-\subsection{Degree Optimization Boundaries}
-A logarithmic sweep mapping error arrays from degree 1 up to polynomial explosion bounds was evaluated. Validation MSE decreases through degree 8 and then increases sharply, while training MSE continues to decrease. This gap indicates overfitting and numerical instability at higher degrees.
+\subsection{Choosing the Polynomial Degree}
+We tested degrees 1 through 20. The validation MSE drops until degree 8 and then starts to rise sharply, while the training MSE keeps dropping. This shows that the model starts heavily overfitting at higher degrees.
 \begin{figure}[htbp]
     \centering
     \includegraphics[width=0.7\textwidth]{images/phase2_cv_curve.png}
@@ -157,10 +157,10 @@ The minimal automated Validation MSE confirms an optimal fit at \textbf{Degree 8
     \caption{True output mappings accurately predicting geological boundaries.}
 \end{figure}
 
-\section{Computational Complexity \& Overparameterization}
+\section{Overfitting at High Degrees}
 During the exhaustive degree search, models were evaluated up to the maximum candidate degrees specified for this analysis (Degree 10 for Phase 1 and Degree 20 for Phase 2). It is mathematically critical to note that high-degree polynomial expansions trigger severe overparameterization. For instance, evaluating Phase 1 at Degree 10 across 6 features generates over 8,000 distinct polynomial interaction parameters. When fitted against approximately 1,000 training observations, the design matrix becomes pathologically rank-deficient (where $P > N$).
 
-This disparity causes the standard Ordinary Least Squares (OLS) estimator to produce nearly zero training error. However, this high-dimensional polynomial surface exhibits wild mathematical oscillations between known data points. When exposed to new unseen Validation folds, this creates large extrapolation and numerical-instability errors on held-out folds, explaining the massive spikes observed in the right-tails of the CV curves. By strictly trusting the Out-Of-Fold Validation MSE to natively cap the models at Degree 3 and Degree 8, this methodology successfully avoided these catastrophic numerical illusions without relying on external Ridge or Lasso constraints.
+Because of this, the training error drops to almost zero because the model memorizes the data. However, the model will fail to predict new unseen data, which explains the massive spikes in the validation error curves. By picking Degree 3 and Degree 8 based on validation error, we successfully avoided this overfitting problem without needing any extra regularization.
 
 \section{Conclusion}
 The experimental results demonstrate that rigorous cross-validation and inclusive feature retention successfully produce robust unpenalized polynomial models. By focusing on explicit Out-of-Fold variance tracking rather than isolated Training metrics, Phase 1 and Phase 2 achieved out-of-fold $R^2$ estimates of $0.9067$ and $0.9947$ respectively, with the selected degrees determined by the evaluated cross-validation results.
